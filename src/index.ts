@@ -1,17 +1,18 @@
-import express, { Request, Response } from 'express';
-import cors from 'cors';
+import { Server } from 'socket.io';
 
-const app = express();
+import { createMessage } from './handlers/messages';
+
+const io = new Server({
+  cors: {
+    origin: 'http://localhost:5173'
+  }
+});
 
 const PORT = 3000;
 
-app.use(cors());
-app.use(express.json());
+io.listen(PORT);
 
-const initialServer = () => {
-  app.listen(PORT, () => {
-    console.log(`Express server started on port ${PORT}.`);
-  });
-};
-
-initialServer();
+io.on('connection', (socket) => {
+  console.log('connected');
+  socket.on('message:create', (payload) => createMessage(payload, socket));
+});
