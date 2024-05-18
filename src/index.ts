@@ -1,18 +1,34 @@
+import { createServer } from 'node:http';
+
+import cors from 'cors';
 import { Server } from 'socket.io';
+import express, { Request, Response } from 'express';
+import 'dotenv/config';
 
-import { createMessage } from './handlers/messages';
+import { socketServer } from './middleware/socket';
+import routes from './routes';
 
-const io = new Server({
-  cors: {
-    origin: 'http://localhost:5173'
-  }
-});
+const app = express();
+const server = createServer(app);
+const io = new Server(server);
 
 const PORT = 3000;
 
-io.listen(PORT);
+app.use(cors());
+app.use(express.json());
+app.use((req: Request, res: Response, next) =>
+  socketServer(req, res, next, io)
+);
+app.use(routes);
 
-io.on('connection', (socket) => {
-  console.log('connected');
-  socket.on('message:create', (payload) => createMessage(payload, socket));
+server.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+// io.listen(PORT);
+
+// io.on('connection', (socket) => {
+//   console.log('connected');
+//   socket.on('message:create', (payload) => createMessage(payload, socket));
+//   socket.on('disconnect', () => console.log('disconnected'));
+// });
